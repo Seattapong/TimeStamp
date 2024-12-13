@@ -3,101 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Time Tracking</title>
+    <title>Scoreboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: black;
+            color: white;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
             margin: 0;
-            background-color: #f7f7f7;
         }
-        .container {
-            background: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+        .scoreboard {
             text-align: center;
-            width: 300px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border: 5px solid red;
+            border-radius: 15px;
+            width: 400px;
+            background-color: #111;
         }
         .time {
-            font-size: 2em;
+            font-size: 3rem;
             margin-bottom: 20px;
         }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
+        .teams {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .team {
+            flex: 1;
+            text-align: center;
+        }
+        .team-name {
+            font-size: 2rem;
+        }
+        .score {
+            font-size: 3rem;
             margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            color: #ff0000;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
         button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
+            font-size: 1.2rem;
+            padding: 10px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 1em;
-        }
-        .submit-btn {
-            background-color: #4CAF50;
+            background-color: #007bff;
             color: white;
         }
-        .back-btn {
-            background-color: #f44336;
-            color: white;
+        button:hover {
+            background-color: #0056b3;
+        }
+        .control-buttons {
+            margin-top: 20px;
+        }
+        .control-buttons button {
+            background-color: #ff4b5c;
+        }
+        .control-buttons button:hover {
+            background-color: #d90429;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="time" id="currentTime">--:-- --</div>
-        <label for="employeeId">กรอกรหัสพนักงาน</label>
-        <input type="text" id="employeeId" placeholder="รหัสพนักงาน">
-        <button class="submit-btn" id="submitButton">ลงเวลา</button>
-        <button class="back-btn" id="backButton" style="display: none;">ย้อนกลับ</button>
+    <div class="scoreboard">
+        <div class="time" id="time">00:00</div>
+        <div class="teams">
+            <div class="team" id="home">
+                <div class="team-name">HOME</div>
+                <div class="score" id="score-home">0</div>
+                <div class="buttons">
+                    <button onclick="updateScore('home', 1)">+</button>
+                    <button onclick="updateScore('home', -1)">-</button>
+                </div>
+            </div>
+            <div class="team" id="away">
+                <div class="team-name">AWAY</div>
+                <div class="score" id="score-away">0</div>
+                <div class="buttons">
+                    <button onclick="updateScore('away', 1)">+</button>
+                    <button onclick="updateScore('away', -1)">-</button>
+                </div>
+            </div>
+        </div>
+        <div class="control-buttons">
+            <button onclick="startTimer()">START</button>
+            <button onclick="stopTimer()">STOP</button>
+            <button onclick="resetTimer()">RESET</button>
+        </div>
     </div>
-
     <script>
-        // อัปเดตเวลาเรียลไทม์
-        function updateTime() {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const period = hours >= 12 ? 'PM' : 'AM';
-            const timeString = `${hours}:${minutes} ${period}`;
-            document.getElementById('currentTime').textContent = timeString;
-        }
-        setInterval(updateTime, 1000);
-        updateTime(); // เรียกทันทีตอนโหลด
+        let homeScore = 0;
+        let awayScore = 0;
+        let timerInterval;
+        let seconds = 0;
 
-        // ฟังก์ชันเมื่อกดปุ่มลงเวลา
-        document.getElementById('submitButton').addEventListener('click', () => {
-            const employeeId = document.getElementById('employeeId').value;
-
-            if (employeeId.trim() === '') {
-                alert('กรุณากรอกรหัสพนักงาน');
-                return;
+        function updateScore(team, value) {
+            if (team === 'home') {
+                homeScore = Math.max(0, homeScore + value);
+                document.getElementById('score-home').textContent = homeScore;
+            } else if (team === 'away') {
+                awayScore = Math.max(0, awayScore + value);
+                document.getElementById('score-away').textContent = awayScore;
             }
+        }
 
-            const now = new Date();
-            alert(`ลงเวลาเรียบร้อยสำหรับพนักงานรหัส: ${employeeId}\nเวลา: ${now.toLocaleTimeString()}`);
-            
-            // ซ่อนปุ่มลงเวลาและแสดงปุ่มย้อนกลับ
-            document.getElementById('submitButton').style.display = 'none';
-            document.getElementById('backButton').style.display = 'block';
-        });
+        function startTimer() {
+            if (timerInterval) return; // Prevent multiple intervals
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
 
-        // ฟังก์ชันเมื่อกดปุ่มย้อนกลับ
-        document.getElementById('backButton').addEventListener('click', () => {
-            document.getElementById('employeeId').value = '';
-            document.getElementById('submitButton').style.display = 'block';
-            document.getElementById('backButton').style.display = 'none';
-        });
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+
+        function resetTimer() {
+            stopTimer();
+            seconds = 0;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const sec = String(seconds % 60).padStart(2, '0');
+            document.getElementById('time').textContent = `${minutes}:${sec}`;
+        }
     </script>
 </body>
 </html>
